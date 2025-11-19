@@ -571,5 +571,63 @@ public class Rest {
                 return new NetworkFailure(e);
             }
         }
+
+        /**
+         * Executes the request and parses the response as JsonNode.
+         * Use this for exploratory API testing, quick prototyping, or dynamic response structures.
+         * @return HttpResponse containing the parsed JsonNode
+         */
+        public HttpResponse<JsonNode> jsonNode() {
+            try {
+                builder.url(url);
+
+                // Add cookies header if any
+                if (!cookies.isEmpty()) {
+                    builder.header("Cookie", String.join("; ", cookies));
+                }
+
+                // Handle request body for different methods
+                Request request;
+                if ("GET".equals(method) || "HEAD".equals(method)) {
+                    request = builder.method(method, null).build();
+                } else {
+                    RequestBody body = requestBody != null ? requestBody
+                        : RequestBody.create("", null);
+                    request = builder.method(method, body).build();
+                }
+
+                Response response = client.newCall(request).execute();
+                String bodyString = response.body() != null ? response.body().string() : "";
+
+                if (response.isSuccessful()) {
+                    try {
+                        // Parse as JsonNode
+                        JsonNode jsonNode = MAPPER.readTree(bodyString);
+
+                        return new Success<>(
+                            jsonNode,
+                            jsonNode,
+                            response.code(),
+                            response.headers().toMultimap()
+                        );
+                    } catch (Exception parseError) {
+                        return new ParseFailure(
+                            response.code(),
+                            bodyString,
+                            parseError,
+                            response.headers().toMultimap()
+                        );
+                    }
+                } else {
+                    return new HttpFailure(
+                        response.code(),
+                        bodyString,
+                        response.headers().toMultimap()
+                    );
+                }
+            } catch (IOException e) {
+                return new NetworkFailure(e);
+            }
+        }
     }
 }

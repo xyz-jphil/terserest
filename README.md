@@ -2,6 +2,9 @@
 
 A terse wrapper for OkHttp providing minimal ceremony REST API calls in Java.
 
+**GitHub:** https://github.com/xyz-jphil/terserest
+**Maven Central:** https://central.sonatype.com/artifact/io.github.xyz-jphil/terserest
+
 ## Why?
 
 Java REST calls are verbose. This fixes that with fluent JSON builders and clean error handling.
@@ -31,7 +34,7 @@ req("https://api.example.com/users")
 <dependency>
     <groupId>io.github.xyz-jphil</groupId>
     <artifactId>terserest</artifactId>
-    <version>1.0</version>
+    <version>1.1</version>
 </dependency>
 ```
 
@@ -98,6 +101,42 @@ case HttpFailure hf -> {
 req(url).bearer("token").json(Data.class);
 req(url).basic("user", "pass").send();
 req(url).cookie("session", "abc123").send();
+```
+
+**Exploratory Testing with JsonNode:**
+
+Use `jsonNode()` when you don't want to define records upfront:
+
+```java
+// Explore API response structure
+var result = req("https://api.example.com/data")
+    .jsonNode()
+    .orElseThrow();
+
+System.out.println(result.toPrettyString());
+```
+
+```java
+// Extract specific fields without defining records
+var name = req("https://api.example.com/users/1")
+    .jsonNode()
+    .map(node -> node.get("name").asText())
+    .orElseThrow();
+```
+
+```java
+// Handle dynamic response structures
+req(url).jsonNode().handle(
+    success -> {
+        var node = success.data();
+        if (node.has("error")) {
+            handleError(node.get("error"));
+        } else {
+            processData(node.get("result"));
+        }
+    },
+    failure -> System.err.println(failure.message())
+);
 ```
 
 See `src/test/java/terse/TerseHttpExample.java` for more examples.

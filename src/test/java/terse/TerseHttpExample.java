@@ -36,6 +36,7 @@ public class TerseHttpExample {
     static final boolean RUN_EXAMPLE_7 = true;
     static final boolean RUN_EXAMPLE_8 = true;
     static final boolean RUN_EXAMPLE_9 = true;
+    static final boolean RUN_EXAMPLE_10 = true;
 
     // Example record for JSON mapping (strict - all fields must match)
     record User(String name, int age, String email) {}
@@ -108,6 +109,9 @@ public class TerseHttpExample {
 
         // Example 9: Lombok fluent accessors
         if (RUN_EXAMPLE_9) example9_lombokFluent();
+
+        // Example 10: JsonNode for exploratory testing and prototyping
+        if (RUN_EXAMPLE_10) example10_jsonNode();
 
         // Clean exit to avoid OkHttp thread linger warnings
         System.exit(0);
@@ -411,6 +415,82 @@ public class TerseHttpExample {
                     p.price(p.price() * 1.1);  // 10% markup
                     System.out.println("  After markup: $" + p.price());
                     System.out.println("  (Note: 'rating', 'description', 'image' were ignored)");
+                },
+                failure -> System.err.println("  Failed: " + failure.message())
+            );
+
+        System.out.println();
+    }
+
+    /**
+     * Example 10: Using jsonNode() for exploratory testing and prototyping
+     *
+     * Use cases:
+     * 1. Exploratory API testing - when you don't know the response structure
+     * 2. Quick prototyping - no need to define records for one-off scripts
+     * 3. Dynamic response structures - when response format varies
+     */
+    static void example10_jsonNode() {
+        System.out.println("--- Example 10: JsonNode for Exploratory Testing ---");
+
+        // Use Case 1: Exploratory API testing - inspect unknown response structure
+        System.out.println("1. Exploratory Testing (inspect full response):");
+        req("https://jsonplaceholder.typicode.com/posts/1")
+            .jsonNode()
+            .handle(
+                success -> {
+                    var node = success.data();
+                    System.out.println("  Full JSON structure:");
+                    System.out.println("  " + node.toPrettyString());
+                },
+                failure -> System.err.println("  Failed: " + failure.message())
+            );
+
+        // Use Case 2: Quick prototyping - extract specific fields without defining records
+        System.out.println("\n2. Quick Prototyping (extract specific fields):");
+        req("https://jsonplaceholder.typicode.com/users/1")
+            .jsonNode()
+            .map(node -> node.get("name").asText())  // Extract just the name field
+            .handle(
+                success -> System.out.println("  User name: " + success.data()),
+                failure -> System.err.println("  Failed: " + failure.message())
+            );
+
+        // Use Case 3: Dynamic response structures - handle conditional JSON
+        System.out.println("\n3. Dynamic Response Handling:");
+        req("https://jsonplaceholder.typicode.com/comments/1")
+            .jsonNode()
+            .handle(
+                success -> {
+                    var node = success.data();
+                    if (node.has("email")) {
+                        System.out.println("  Has email field: " + node.get("email").asText());
+                    }
+                    if (node.has("body")) {
+                        String body = node.get("body").asText();
+                        System.out.println("  Comment: " + body.substring(0, Math.min(50, body.length())) + "...");
+                    }
+                    if (node.has("error")) {
+                        System.out.println("  Has error: " + node.get("error").asText());
+                    } else {
+                        System.out.println("  No error field (success case)");
+                    }
+                },
+                failure -> System.err.println("  Failed: " + failure.message())
+            );
+
+        // Use Case 4: Extract nested data without full structure
+        System.out.println("\n4. Extract Nested Data:");
+        req("https://jsonplaceholder.typicode.com/users/2")
+            .jsonNode()
+            .handle(
+                success -> {
+                    var node = success.data();
+                    String name = node.get("name").asText();
+                    String city = node.get("address").get("city").asText();
+                    String companyName = node.get("company").get("name").asText();
+                    System.out.println("  " + name + " lives in " + city);
+                    System.out.println("  Works at: " + companyName);
                 },
                 failure -> System.err.println("  Failed: " + failure.message())
             );
