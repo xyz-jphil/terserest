@@ -1,6 +1,7 @@
 package terse;
 
 import static terse.Rest.*;
+import static terse.Json.*;
 
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;

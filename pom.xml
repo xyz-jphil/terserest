@@ -7,7 +7,7 @@
 
     <groupId>io.github.xyz-jphil</groupId>
     <artifactId>terserest</artifactId>
-    <version>1.1</version>
+    <version>1.2</version>
     <packaging>jar</packaging>
 
     <name>TerseRest</name>
@@ -47,6 +47,13 @@
 
 
     <dependencies>
+        <!-- TerseJson for JSON builders -->
+        <dependency>
+            <groupId>io.github.xyz-jphil</groupId>
+            <artifactId>tersejson</artifactId>
+            <version>1.0</version>
+        </dependency>
+
         <!-- OkHttp for HTTP client -->
         <dependency>
             <groupId>com.squareup.okhttp3</groupId>

@@ -1,5 +1,7 @@
 package terse;
 
+import static terse.Json.*;
+
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import okhttp3.*;
@@ -17,96 +19,6 @@ public class Rest {
 
     private static final ObjectMapper MAPPER = new ObjectMapper();
 
-    // ======================
-    // JSON Builder Classes
-    // ======================
-
-    /**
-     * Fluent JSON object builder that extends HashMap.
-     * Supports nested objects and arrays for terse JSON construction.
-     */
-    public static class JsonObj extends HashMap<String, Object> {
-
-        /**
-         * Creates a JSON object from varargs key-value pairs.
-         * @param vs alternating keys and values (must be even length)
-         */
-        public JsonObj(Object... vs) {
-            if (vs.length % 2 != 0) {
-                throw new IllegalArgumentException("Arguments must be key-value pairs (even length)");
-            }
-            for (int i = 0; i < vs.length; i += 2) {
-                put((String) vs[i], vs[i + 1]);
-            }
-        }
-
-        @Override
-        public String toString() {
-            try {
-                return MAPPER.writeValueAsString(this);
-            } catch (Exception e) {
-                throw new RuntimeException("Failed to serialize JSON object", e);
-            }
-        }
-
-        /**
-         * Converts this JSON object to an OkHttp RequestBody.
-         * @return RequestBody with application/json media type
-         */
-        public RequestBody body() {
-            return RequestBody.create(
-                toString(),
-                MediaType.get("application/json")
-            );
-        }
-    }
-
-    /**
-     * Fluent JSON array builder that extends ArrayList.
-     * Supports nested objects and arrays for terse JSON construction.
-     */
-    public static class JsonArr extends ArrayList<Object> {
-
-        /**
-         * Creates a JSON array from varargs elements.
-         * @param vs array elements
-         */
-        public JsonArr(Object... vs) {
-            addAll(Arrays.asList(vs));
-        }
-
-        @Override
-        public String toString() {
-            try {
-                return MAPPER.writeValueAsString(this);
-            } catch (Exception e) {
-                throw new RuntimeException("Failed to serialize JSON array", e);
-            }
-        }
-    }
-
-    // ======================
-    // Static Helper Methods
-    // ======================
-
-    /**
-     * Creates a JSON object from varargs key-value pairs.
-     * @param vs alternating keys and values
-     * @return JsonObj instance
-     */
-    public static JsonObj obj(Object... vs) {
-        return new JsonObj(vs);
-    }
-
-    /**
-     * Creates a JSON array from varargs elements.
-     * @param vs array elements
-     * @return JsonArr instance
-     */
-    public static JsonArr arr(Object... vs) {
-        return new JsonArr(vs);
-    }
-
     /**
      * Creates a new fluent HTTP request builder.
      * @param url the target URL
@@ -114,6 +26,19 @@ public class Rest {
      */
     public static RestClient req(String url) {
         return new RestClient(url);
+    }
+
+    /**
+     * Converts a JsonObj to an OkHttp RequestBody.
+     * Helper method for terserest-specific functionality.
+     * @param json JSON object
+     * @return RequestBody with application/json media type
+     */
+    public static RequestBody toBody(JsonObj json) {
+        return RequestBody.create(
+            json.toString(),
+            MediaType.get("application/json")
+        );
     }
 
     // ======================
@@ -433,7 +358,7 @@ public class Rest {
          * @return this
          */
         public RestClient body(JsonObj json) {
-            this.requestBody = json.body();
+            this.requestBody = toBody(json);
             contentType("application/json");
             return this;
         }

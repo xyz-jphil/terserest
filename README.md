@@ -34,13 +34,14 @@ req("https://api.example.com/users")
 <dependency>
     <groupId>io.github.xyz-jphil</groupId>
     <artifactId>terserest</artifactId>
-    <version>1.1</version>
+    <version>1.2</version>
 </dependency>
 ```
 
 **Import:**
 ```java
 import static terse.Rest.*;
+import static terse.Json.*;  // Required for obj() and arr() in version 1.2+
 ```
 
 ## Examples
@@ -140,6 +141,54 @@ req(url).jsonNode().handle(
 ```
 
 See `src/test/java/terse/TerseHttpExample.java` for more examples.
+
+## Upgrading from 1.1 to 1.2
+
+**What changed:** JSON builders (`obj()`, `arr()`, `JsonObj`, `JsonArr`) moved to separate library `tersejson`.
+
+**Why:** Clean separation of concerns - `tersejson` provides JSON building without HTTP dependencies, `terserest` focuses on HTTP client functionality.
+
+**Migration steps:**
+
+1. **Update terserest version:**
+```xml
+<dependency>
+    <groupId>io.github.xyz-jphil</groupId>
+    <artifactId>terserest</artifactId>
+    <version>1.2</version>  <!-- Updated from 1.1 -->
+</dependency>
+```
+
+2. **Add one import line to your code:**
+```java
+import static terse.Rest.*;
+import static terse.Json.*;  // ADD THIS LINE
+```
+
+That's it! Your code remains unchanged - `obj()` and `arr()` work exactly the same way.
+
+**Using tersejson standalone:**
+
+If you only need JSON building (without HTTP client), use `tersejson` directly:
+
+```xml
+<dependency>
+    <groupId>io.github.xyz-jphil</groupId>
+    <artifactId>tersejson</artifactId>
+    <version>1.0</version>
+</dependency>
+```
+
+```java
+import static terse.Json.*;
+
+// Build JSON with any HTTP client (OkHttp, Java HttpClient, etc.)
+String jsonString = obj(
+    "name", "Alice",
+    "age", 30,
+    "tags", arr("admin", "verified")
+).toString();
+```
 
 ## Requirements
 
